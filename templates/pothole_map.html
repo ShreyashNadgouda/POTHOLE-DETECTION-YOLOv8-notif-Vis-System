@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pothole Detection Map</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <style>
+        #map { width: 100%; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        var map, markers = [];  // Array to keep track of markers
+
+        // Initialize map centered at an example starting location (you can customize the coordinates)
+        function initializeMap(lat, lon) {
+            map = L.map('map').setView([lat, lon], 17);  // Center map on initial coordinates
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        // Function to fetch latest pothole data from the Flask server
+        function fetchPotholeUpdates() {
+            $.getJSON('/get_pothole_updates', function(data) {
+                // Clear existing markers to refresh the map with new data
+                clearMarkers();
+
+                // Add new markers based on updated pothole data
+                data.potholes.forEach(function(pothole) {
+                    addPotholeMarker(pothole.lat, pothole.lon);
+                });
+            });
+        }
+
+        // Clear all markers from the map
+        function clearMarkers() {
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+        }
+
+        // Add a marker at specified latitude and longitude
+        function addPotholeMarker(lat, lon) {
+            var marker = L.marker([lat, lon]).addTo(map)
+                .bindPopup("Pothole detected at Latitude: " + lat + ", Longitude: " + lon);
+            markers.push(marker);  // Keep track of markers
+        }
+
+        // Initialize the map with starting coordinates and set update interval
+        $(document).ready(function() {
+            initializeMap(19.1098, 72.8377);  // Customize starting coordinates if needed
+            setInterval(fetchPotholeUpdates, 5000);  // Fetch updates every 5 seconds
+        });
+    </script>
+</body>
+</html>
